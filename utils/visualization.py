@@ -70,9 +70,10 @@ def visualize_signed_distance_w_embedding(model,embedding,device=torch.device('c
 
 def random_visualization(polys_dict,model):
     poly_id = random.choice(list(polys_dict.keys()))
+    poly=polys_dict[poly_id]
     delta = 0.2
-    xs = [x[0] for x in polys_dict[poly_id].exterior.coords]
-    ys = [x[1] for x in polys_dict[poly_id].exterior.coords]
+    xs = [x[0] for x in poly.exterior.coords] if poly.geom_type == 'Polygon' else poly.coords
+    ys = [x[1] for x in poly.exterior.coords] if poly.geom_type == 'Polygon' else poly.coords
     # while len(xs) < 15:
     #     poly_id = random.choice(list(polys_dict.keys()))
     #     xs = [x[0] for x in polys_dict[poly_id].exterior.coords]
