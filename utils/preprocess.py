@@ -1,6 +1,5 @@
 from shapely.affinity import translate, scale
 import numpy as np
-import matplotlib.pyplot as plt
 import shapely.geometry
 from shapely import affinity
 from shapely.geometry import (
@@ -95,27 +94,6 @@ def visualize_signed_distance_real(poly, bounds=((-1, 1), (-1, 1)), resolution=3
     plt.xlim(bounds[0][0], bounds[0][1])
     plt.ylim(bounds[1][0], bounds[1][1])
     plt.show()
-
-def plot_polygon(poly, linewidth=1):
-    if poly.geom_type == 'Polygon':
-        x, y = poly.exterior.xy
-        plt.plot(x, y, color='black', linewidth=linewidth)
-        for interior in poly.interiors:
-            x, y = interior.xy
-            plt.plot(x, y, color='yellow', linewidth=linewidth)
-    elif poly.geom_type == 'MultiPolygon':
-        for p in poly.geoms:
-            x, y = p.exterior.xy
-            plt.plot(x, y, color='black', linewidth=linewidth)
-            for interior in p.interiors:
-                x, y = interior.xy
-                plt.plot(x, y, color='yellow', linewidth=linewidth)
-    elif poly.geom_type == 'LineString':
-        x, y = poly.xy
-        plt.plot(x, y, color='black', linewidth=linewidth)
-    elif poly.geom_type == 'Point':
-        x, y = poly.coords.xy
-        plt.scatter(x, y, color='black', s=linewidth * 10)
 
 def normalize_geometries(polys_list):
     """

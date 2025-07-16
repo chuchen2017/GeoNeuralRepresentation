@@ -274,6 +274,9 @@ def test_distance(polys_dict,polys_location_embedding,num_training = 5,num_epoch
     #type1 2  in 'Polygon' # 'Point' # 'LineString'
     type1_polys_dict = dict([(key,value) for key,value in polys_dict.items() if value.geom_type == type1])
     type2_polys_dict = dict([(key,value) for key,value in polys_dict.items() if value.geom_type == type2])
+    if len(type1_polys_dict)==0 or len(type2_polys_dict)==0:
+        print('No corresponding datatype in the current dataset, try others: [\'MultiPolygon\',\'Polygon\',\'Point\' , \'LineString\']')
+        return
     i=0
     while len(distance_dataset) < num_pairs:
         id1 = random.choice(list(type1_polys_dict.keys()))

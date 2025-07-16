@@ -1,3 +1,5 @@
+import os
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 import multiprocessing
 import gc
 import argparse
@@ -19,9 +21,11 @@ def get_args():
     parser = argparse.ArgumentParser(description="Geo2vec Training Config")
 
     #file_path: where the data is stored in pkl or gpkg format
-    parser.add_argument('--file_path', type=str, default='../data/Singapore_total_data.gpkg')
+    file_path = r'D:\Research\ServerBackup\Universal\shp\USC_polygons.shp'
+    parser.add_argument('--file_path', type=str, default=file_path)
     #Save file path
-    parser.add_argument('--save_file_name', type=str, default='../data/test_location.pth')
+    save_path = file_path.replace('.shp','.pth')
+    parser.add_argument('--save_file_name', type=str, default=save_path)
 
     #Sampling Parameters
     parser.add_argument('--num_process', type=int, default=12)
@@ -45,6 +49,9 @@ def get_args():
     parser.add_argument('--log_sampling', action='store_true', default=False)
     parser.add_argument('--training_ratio', type=float, default=0.95)
 
+    # Testing options
+    parser.add_argument('--test_representation', type=bool, default=False)
+    parser.add_argument('--visualSDF', type=bool, default=True)
     return parser.parse_args()
 
 
@@ -136,8 +143,10 @@ def main():
             np.save(save_file_name.replace('.pth','_loc'), location_embedding)
             best_val_loss = test_epoch_loss
 
-            test_representation.test_distance(polys_dict_loc, location_embedding, num_training=1, num_epochs=30, num_pairs=50000)
-            visualization.random_visualization(polys_dict_loc,model)
+            if args.test_representation:
+                test_representation.test_distance(polys_dict_loc, location_embedding, num_training=1, num_epochs=30, num_pairs=50000)
+            if args.visualSDF:
+                visualization.random_visualization(polys_dict_loc,model)
 
         print(f'Epoch {epoch + 1}/{epochs}, Loss: {epoch_loss / len(dataloader)}, TEST Loss: {test_epoch_loss }')
 

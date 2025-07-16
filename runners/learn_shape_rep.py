@@ -1,3 +1,5 @@
+import os
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 import multiprocessing
 import gc
 import argparse
@@ -13,21 +15,25 @@ import utils.test_representation as test_representation
 from models.Geo2Vec import Geo2Vec_Model,Geo2Vec_Dataset,SDFLoss
 from models import MP_Sampling
 from utils.data_loader import load_data
+import utils.visualization as visualization
 
 def get_args():
     parser = argparse.ArgumentParser(description="Geo2vec Training Config")
 
     #file_path: where the data is stored in pkl or gpkg format
-    parser.add_argument('--file_path', type=str, default='../data/ShapeClassification.gpkg')
+    file_path = r'D:\Research\ServerBackup\Universal\shp\USC_lines.shp'
+    file_path = r'D:\Research\2025\codes\NeuralRepresentation\data\Singapore_total_data.gpkg'
+    parser.add_argument('--file_path', type=str, default=file_path)
     #Save file path
-    parser.add_argument('--save_file_name', type=str, default='../data/test.pth')
+    save_path = file_path.replace('.shp','.pth')
+    parser.add_argument('--save_file_name', type=str, default=save_path)
 
     #Sampling Parameters
     parser.add_argument('--num_process', type=int, default=16)
-    parser.add_argument('--samples_perUnit', type=int, default=200)
-    parser.add_argument('--point_sample', type=int, default=50)
+    parser.add_argument('--samples_perUnit', type=int, default=100) #200
+    parser.add_argument('--point_sample', type=int, default=20) #50
     parser.add_argument('--sample_band_width', type=float, default=0.1)
-    parser.add_argument('--uniformed_sample_perUnit', type=int, default=20)
+    parser.add_argument('--uniformed_sample_perUnit', type=int, default=10) #20
 
     # Training parameters
     parser.add_argument('--batch_size', type=int, default=1024 * 20)
@@ -44,6 +50,9 @@ def get_args():
     parser.add_argument('--log_sampling', action='store_true', default=True)
     parser.add_argument('--training_ratio', type=float, default=0.95)
 
+    # Testing options
+    parser.add_argument('--test_representation', type=bool, default=True)
+    parser.add_argument('--visualSDF', type=bool, default=True)
     return parser.parse_args()
 
 
@@ -136,17 +145,25 @@ def main():
             np.save(save_file_name.replace('.pth','_shp'), location_embedding)
             best_val_loss = test_epoch_loss
 
-            labels = num_edges_labels
-            classification = True if type(labels[0]) == str else False
-            poly_ids = list(labels.keys())
-            random.shuffle(poly_ids)
-            poly_ids_train = poly_ids[:int(0.7 * len(poly_ids))]
-            poly_ids_test = poly_ids[int(0.7 * len(poly_ids)):int(0.85 * len(poly_ids))]
-            poly_ids_val = poly_ids[int(0.85 * len(poly_ids)):]
-            result_class = test_representation.test_representation_embed(location_embedding, z_size, labels, device,
-                                                                         poly_ids_train, poly_ids_test, poly_ids_val,
-                                                                         batch_size=32, epochs=100, print_result=False,
-                                                                         classification=classification)
+            if args.test_representation:
+                labels = num_edges_labels
+                classification = True if type(labels[0]) == str else False
+                poly_ids = list(labels.keys())
+                random.shuffle(poly_ids)
+                poly_ids_train = poly_ids[:int(0.7 * len(poly_ids))]
+                poly_ids_test = poly_ids[int(0.7 * len(poly_ids)):int(0.85 * len(poly_ids))]
+                poly_ids_val = poly_ids[int(0.85 * len(poly_ids)):]
+                result_class = test_representation.test_representation_embed(location_embedding, z_size, labels, device,
+                                                                             poly_ids_train, poly_ids_test,
+                                                                             poly_ids_val,
+                                                                             batch_size=32, epochs=100,
+                                                                             print_result=False,
+                                                                             classification=classification)
+
+            if args.visualSDF:
+                visualization.random_visualization(polys_dict_shape,model)
+
+
 
         print(f'Epoch {epoch + 1}/{epochs}, Loss: {epoch_loss / len(dataloader)}, TEST Loss: {test_epoch_loss }')
 

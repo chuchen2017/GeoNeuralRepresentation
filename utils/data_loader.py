@@ -1,7 +1,10 @@
 import geopandas as gpd
 import pickle
+
+from pyarrow.dataset import dataset
 from tqdm import tqdm
-from utils.preprocess import poly_preprocess,plot_polygon,count_edges,normalize_geometries
+from utils.preprocess import poly_preprocess,count_edges,normalize_geometries
+from  utils.visualization import plot_polygon
 import random
 import pandas as pd
 
@@ -41,6 +44,7 @@ def ensure_geodataframe(polys_scaled_normalized):
 
 
 def load_data(dataset_name,visual=False):
+    print('Loading ... ',dataset_name)
     if dataset_name == 'Building':
         polys_scaled_normalized = gpd.read_file('../data/ShapeClassification.gpkg')
     elif dataset_name == 'MNIST':
@@ -51,7 +55,7 @@ def load_data(dataset_name,visual=False):
             polys_scaled_normalized = pickle.load(f)
         polys_scaled_normalized = [data['shape'] for data in polys_scaled_normalized]
     elif dataset_name == 'NYC':
-        with open('/home/users/chen/2024/NeuralRepresentation/data/Polygon/NYC_total_data.pkl', 'rb') as f:
+        with open('../data/NYC_total_data.pkl', 'rb') as f:
             polys_scaled_normalized = pickle.load(f)
         polys_scaled_normalized = [data['shape'] for data in polys_scaled_normalized]
     else:
@@ -62,8 +66,12 @@ def load_data(dataset_name,visual=False):
         elif '.gpkg' in dataset_name:
             polys_scaled_normalized = gpd.read_file(dataset_name)
         else:
-            raise ValueError(
-                f"Unsupported Datatype, Define your dataloader, Load the data as gpd.")
+            try:
+                polys_scaled_normalized = ensure_geodataframe(dataset_name)
+            except Exception as e:
+                print(e)
+                raise ValueError(
+                    f"Unsupported Datatype, Define your dataloader, Load the data as gpd.")
 
     if type(polys_scaled_normalized) is list:
         # If polys_scaled_normalized is a list, convert it to a GeoDataFrame
