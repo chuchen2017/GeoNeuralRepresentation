@@ -1,18 +1,48 @@
-# 🧠*Geo2Vec: Shape- and Distance-Aware Neural Representation of Geospatial Entities*
+# 🌍 Geo2Vec: Shape- and Distance-Aware Neural Representation of Geospatial Entities
 
-The original codes of the paper. More detail will be added soon!
-
----
-
-### 📌 Overview
-
-Spatial representation learning underpins a wide range of GeoAI applications, such as land-use classification and urban analytics, by encoding not just the shapes and locations of geospatial entities (points, polylines, polygons) but also their topological and distance relationships. Recent methods like Poly2Vec leverage Fourier transforms to generate unified embeddings for different spatial object types. However, these approaches rely on uniform, non-adaptive sampling in the Fourier domain, due to the lack of direct correspondence between real-world geometry and the Fourier feature space. As a result, they often produce overly smooth representations that fail to capture fine-grained structural features such as sharp edges and boundaries.
-
-To overcome these limitations, we introduce Geo2Vec, a novel spatial representation learning method inspired by the signed distance field (SDF). Geo2Vec adaptively samples real-world points, encoding each by its signed distance to the target entity (positive outside, negative inside), thus grounding the embedding in geometric proximity and containment. We train a neural network to approximate the SDF of each spatial object, effectively learning a compact, geometry-aware representation. To enhance expressiveness, we also propose a rotation-invariant positional encoding scheme for the sampled points, allowing the model to capture high-frequency spatial variations and promoting more interpretable embeddings for downstream GeoAI tasks.
-
-Empirical results show that Geo2Vec outperforms existing methods in spatial reasoning tasks, topological and distance relationship inference, and significantly improves performance on a range of GeoAI applications.
+> 🚀 *Building the wheel for next-generation GeoAI* — a moonshot for spatial understanding.
 
 ---
 
-![Intuition](./pics/visio144.png)
+![Geo2Vec Intuition](./pics/visio144.png)
 
+---
+
+## 📌 Overview
+
+Spatial representation learning underpins a wide range of **GeoAI applications**—from land-use classification to urban morphology analysis. However, encoding the **shapes, positions**, and **topological relationships** of spatial entities (points, polylines, polygons) remains a challenging task.
+
+### 🧠 Why Geo2Vec?
+
+**Geo2Vec** introducing:
+- **Signed Distance Field (SDF)-based encoding**: Points are sampled around spatial entities and encoded by their signed distances (positive outside, negative inside).
+- **Adaptive sampling & rotation-invariant encoding**: Enabling rich, geometry-aware and interpretable embeddings.
+- **Compact neural approximation** of each shape's SDF.
+
+---
+
+## ✨ Key Features
+
+- 🌀 **SDF-Based Embeddings** — Learn spatial structures through real distance fields.
+- 📐 **Adaptive Positional Encoding** — Capture fine detail and structure.
+- 🔁 **Rotation-Invariance** — Robust to spatial orientation.
+- 🗺️ **Supports multiple geometry types** — Points, lines, and polygons, multipolygon, polygon with holes.
+
+---
+
+## 📊 Applications
+
+- 🏢 Land-use & building classification  
+- 🧭 Topology & spatial relation reasoning  
+- 📦 Compact vector representations for large-scale geospatial datasets  
+
+---
+
+## 🛠️ Installation
+
+> More setup details will be added soon!
+
+```bash
+git clone https://github.com/yourusername/geo2vec.git
+cd geo2vec
+pip install -r requirements.txt
