@@ -43,6 +43,5 @@ Spatial representation learning underpins a wide range of **GeoAI applications**
 > More setup details will be added soon!
 
 ```bash
-git clone https://github.com/yourusername/geo2vec.git
-cd geo2vec
+git clone NeuralRepresentation
 pip install -r requirements.txt
