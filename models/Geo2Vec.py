@@ -111,7 +111,7 @@ class SDFLoss(nn.Module):
             true_sdf (Tensor): ground-truth SDF values, shape [B, N]
             latent_code (Tensor): latent vector per shape, shape [B, D]
         """
-        if self.code_reg_weight > 0.0 or code_reg_weight > 0.0:
+        if self.code_reg_weight > 0.0 or code_reg_weight is not None:
             total_loss = torch.sum(torch.abs(pred_sdf - true_sdf)) if self.sum else torch.mean(torch.abs(pred_sdf - true_sdf))
             if code_reg_weight is not None:
                 total_loss += torch.mean(latent_code.pow(2)) * code_reg_weight

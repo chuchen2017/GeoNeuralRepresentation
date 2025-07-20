@@ -21,11 +21,10 @@ def get_args():
     parser = argparse.ArgumentParser(description="Geo2vec Training Config")
 
     #file_path: where the data is stored in pkl or gpkg format
-    file_path = r'D:\Research\ServerBackup\Universal\shp\USC_lines.shp'
-    file_path = r'D:\Research\2025\codes\NeuralRepresentation\data\Singapore_total_data.gpkg'
+    file_path = r'data\ShapeClassification.gpkg'
     parser.add_argument('--file_path', type=str, default=file_path)
     #Save file path
-    save_path = file_path.replace('.shp','.pth')
+    save_path = os.path.splitext(file_path)[0] + '.pth'
     parser.add_argument('--save_file_name', type=str, default=save_path)
 
     #Sampling Parameters
@@ -38,7 +37,7 @@ def get_args():
     # Training parameters
     parser.add_argument('--batch_size', type=int, default=1024 * 20)
     parser.add_argument('--num_workers', type=int, default=8)  # Training dataload number of works
-    parser.add_argument('--epochs', type=int, default=2)
+    parser.add_argument('--epochs', type=int, default=5)
     parser.add_argument('--num_layers', type=int, default=8)
     parser.add_argument('--z_size', type=int, default=256)
     parser.add_argument('--hidden_size', type=int, default=256)
@@ -46,7 +45,7 @@ def get_args():
     parser.add_argument('--device', type=str, default='cuda' if torch.cuda.is_available() else 'cpu')
     parser.add_argument('--code_reg_weight', type=float, default=1.0)
     parser.add_argument('--weight_decay', type=float, default=0.01)
-    parser.add_argument('--polar_fourier', action='store_true', default=False)
+    parser.add_argument('--polar_fourier', action='store_true', default=True)
     parser.add_argument('--log_sampling', action='store_true', default=True)
     parser.add_argument('--training_ratio', type=float, default=0.95)
 
