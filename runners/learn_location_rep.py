@@ -41,7 +41,7 @@ def get_args():
     parser.add_argument('--num_layers', type=int, default=8)
     parser.add_argument('--z_size', type=int, default=256)
     parser.add_argument('--hidden_size', type=int, default=256)
-    parser.add_argument('--num_freqs', type=int, default=8)
+    parser.add_argument('--num_freqs', type=int, default=16)
     parser.add_argument('--device', type=str, default='cuda' if torch.cuda.is_available() else 'cpu')
     parser.add_argument('--code_reg_weight', type=float, default=0.0)
     parser.add_argument('--weight_decay', type=float, default=0.01)

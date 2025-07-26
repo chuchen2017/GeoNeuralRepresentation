@@ -43,5 +43,5 @@ Spatial representation learning underpins a wide range of **GeoAI applications**
 > More setup details will be added soon!
 
 ```bash
-git clone NeuralRepresentation
+git clone GeoNeuralRepresentation
 pip install -r requirements.txt

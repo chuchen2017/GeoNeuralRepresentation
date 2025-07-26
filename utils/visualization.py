@@ -1,6 +1,8 @@
 import torch
 import random
 import matplotlib.pyplot as plt
+import numpy as np
+from models.sample_function import signed_distance
 
 def plot_polygon(poly, linewidth=1):
     if poly.geom_type == 'Polygon':
@@ -23,6 +25,33 @@ def plot_polygon(poly, linewidth=1):
         x, y = poly.coords.xy
         plt.scatter(x, y, color='black', s=linewidth * 10)
 
+def visualize_signed_distance_real(poly, bounds=((-1, 1), (-1, 1)), resolution=300, levels=100, countour=True):
+    x_grid = np.linspace(bounds[0][0], bounds[0][1], resolution)
+    y_grid = np.linspace(bounds[1][0], bounds[1][1], resolution)
+    xx, yy = np.meshgrid(x_grid, y_grid)
+    grid_points = np.c_[xx.ravel(), yy.ravel()]
+    distances = []
+    for i in range(len(grid_points)):
+        distance = signed_distance(pt=grid_points[i], polygon=poly)
+        distances.append(distance)
+    distances = np.array(distances).reshape(xx.shape)
+
+    if countour:
+        plt.figure(figsize=(8, 7))
+        contour = plt.contourf(xx, yy, distances, levels=levels, cmap='Spectral', alpha=0.9)
+        plt.colorbar(contour, label='Signed Distance')
+    else:
+        plt.figure(figsize=(8, 7))
+        plt.imshow(distances, extent=(bounds[0][0], bounds[0][1], bounds[1][0], bounds[1][1]),
+                   origin='lower', cmap='Spectral', alpha=0.9, aspect='auto')
+        plt.colorbar(label='Signed Distance')
+
+    plt.xticks([])
+    plt.yticks([])
+    plt.title('Signed Distance Field')
+    plt.xlim(bounds[0][0], bounds[0][1])
+    plt.ylim(bounds[1][0], bounds[1][1])
+    plt.show()
 
 def visualize_signed_distance(model, poly_id,polygon, bounds=((-5, 5), (-5, 5)), resolution=300,device=torch.device('cuda')):
     x_grid = torch.linspace(bounds[0][0], bounds[0][1], resolution)
