@@ -42,6 +42,25 @@ def ensure_geodataframe(polys_scaled_normalized):
 
     raise TypeError("Cannot convert polys_scaled_normalized to GeoDataFrame. Input format not recognized.")
 
+def preprocessing_list(Geolist):
+    # Converts list ot Geopandas
+    Geolist = normalize_geometries(Geolist)
+    polys_dict_shape = {}
+    polys_dict_location = {}
+    classification_labels = {}
+    areas_labels = {}
+    perimeters_labels = {}
+    num_edges_labels = {}
+    for id, row in enumerate(Geolist):
+        poly = row
+        preprocess = poly_preprocess(poly)
+        polys_dict_shape[id] = preprocess[0]
+        polys_dict_location[id] = preprocess[1]
+        areas_labels[id] = polys_dict_location[id].area
+        perimeters_labels[id] = polys_dict_location[id].length
+        num_edges_labels[id] = count_edges(polys_dict_location[id])
+    return polys_dict_shape,polys_dict_location, classification_labels, areas_labels, perimeters_labels, num_edges_labels
+
 
 def load_data(dataset_name,visual=False):
     print('Loading ... ',dataset_name)

@@ -35,38 +35,6 @@ def count_edges(geom: BaseGeometry) -> int:
     else:
         raise TypeError(f"Unsupported geometry type: {type(geom)}")
 
-def signed_distance(pt: tuple, polygon: shapely.geometry) -> float:
-    """
-    Calculate the signed distance from a point to a polygon.
-    Positive distance indicates the point is outside the polygon,
-    negative distance indicates the point is inside the polygon.
-    """
-    point = shapely.geometry.Point(pt)  # Point(pt) # pt is a tuple (x, y)
-    try:
-        if polygon.geom_type == 'Polygon':
-            distance = polygon.exterior.distance(point)
-            for interior in polygon.interiors:
-                distance = min(distance, interior.distance(point))
-            return -distance if polygon.contains(point) else distance  # point.distance(polygon)
-        elif polygon.geom_type == 'MultiPolygon':
-            distance = float('inf')
-            for poly in polygon.geoms:
-                d = poly.exterior.distance(point)
-                for interior in poly.interiors:
-                    d = min(d, interior.distance(point))
-                if poly.contains(point):
-                    d = -d
-                distance = min(distance, d)
-            return distance
-        elif polygon.geom_type == 'LineString':
-            distance = polygon.distance(point)
-            return distance  # point.distance(polygon)
-        elif polygon.geom_type == 'Point':
-            return point.distance(polygon)
-    except Exception as e:
-        print(f"Error calculating signed distance: {polygon}")
-        return 0
-
 def normalize_geometries(polys_list):
     """
     Normalize all the polygons in the list to (-1,1)

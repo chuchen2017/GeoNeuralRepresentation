@@ -31,6 +31,13 @@ def signed_distance(pt: tuple, polygon: shapely.geometry) -> float:
         elif polygon.geom_type == 'LineString':
             distance = polygon.distance(point)
             return distance  # point.distance(polygon)
+        elif polygon.geom_type == 'MultiLineString':
+            distance = float('inf')
+            for poly in polygon.geoms:
+                d = poly.distance(point)
+                if d<distance:
+                    distance = d
+            return distance
         elif polygon.geom_type == 'Point':
             return point.distance(polygon)
     except Exception as e:
@@ -161,8 +168,9 @@ def sample_signed_distance(polygon, samples_perUnit=1000, point_sample=50, sampl
                 x3 = p1[0] + dx
                 y3 = p1[1] + dy
                 sampled_points_boundary.append((x3, y3))
-                sampled_points_signed_dist.append(signed_distance((x3, y3), polygon))
-
+                sampled_points_signed_dist.append(
+                    signed_distance((x3, y3), polygon) if multi_polygon is None else signed_distance((x3, y3),
+                                                                                                     multi_polygon))
         for i in range(len(poly_points) - 1):
             p1 = poly_points[i]
             p2 = poly_points[i + 1]
@@ -174,9 +182,21 @@ def sample_signed_distance(polygon, samples_perUnit=1000, point_sample=50, sampl
                 d = random.gauss(0, sample_band_width)
                 x3, y3 = sample_perpendicular_at_fraction(p1[0], p1[1], p2[0], p2[1], f, d)
                 sampled_points_boundary.append((x3, y3))
-                sampled_points_signed_dist.append(signed_distance((x3, y3), polygon))
+                sampled_points_signed_dist.append(
+                    signed_distance((x3, y3), polygon) if multi_polygon is None else signed_distance((x3, y3),
+                                                                                                     multi_polygon))
 
         return poly_points + sampled_points_boundary, signed_distances + sampled_points_signed_dist
+
+    elif polygon.geom_type == 'MultiLineString':
+        poly_points = []
+        signed_distances = []
+        for poly in polygon.geoms:
+            sample1, distance1 = sample_signed_distance(poly, samples_perUnit, point_sample, sample_band_width,
+                                                        multi_polygon=polygon)
+            poly_points.extend(sample1)
+            signed_distances.extend(distance1)
+        return poly_points, signed_distances
 
     elif polygon.geom_type == 'Point':
         # sample all the points in the polygon
@@ -197,6 +217,8 @@ def sample_signed_distance(polygon, samples_perUnit=1000, point_sample=50, sampl
             sampled_points_signed_dist.append(signed_distance((x3, y3), polygon))
 
         return poly_points + sampled_points_boundary, signed_distances + sampled_points_signed_dist
+
+
 
     else:
         raise ValueError(

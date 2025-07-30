@@ -21,6 +21,10 @@ def plot_polygon(poly, linewidth=1):
     elif poly.geom_type == 'LineString':
         x, y = poly.xy
         plt.plot(x, y, color='black', linewidth=linewidth)
+    elif poly.geom_type == 'MultiLineString':
+        for p in poly.geoms:
+            x, y = p.exterior.xy
+            plt.plot(x, y, color='black', linewidth=linewidth)
     elif poly.geom_type == 'Point':
         x, y = poly.coords.xy
         plt.scatter(x, y, color='black', s=linewidth * 10)
