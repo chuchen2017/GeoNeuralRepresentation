@@ -21,7 +21,7 @@ def get_args():
     parser = argparse.ArgumentParser(description="Geo2vec Training Config")
 
     #file_path: where the data is stored in pkl or gpkg format
-    file_path = r'data\ShapeClassification.gpkg'
+    file_path = r'..\data\merged_buildings_normalized.gpkg'
     parser.add_argument('--file_path', type=str, default=file_path)
     #Save file path
     save_path = os.path.splitext(file_path)[0] + '.pth'
@@ -30,7 +30,7 @@ def get_args():
     #Sampling Parameters
     parser.add_argument('--num_process', type=int, default=16)
     parser.add_argument('--samples_perUnit', type=int, default=100) #200
-    parser.add_argument('--point_sample', type=int, default=20) #50
+    parser.add_argument('--point_sample', type=int, default=5) #50
     parser.add_argument('--sample_band_width', type=float, default=0.1)
     parser.add_argument('--uniformed_sample_perUnit', type=int, default=10) #20
 

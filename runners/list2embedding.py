@@ -1,13 +1,15 @@
+import numpy as np
 import os
-
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+import os
+os.environ["MKL_THREADING_LAYER"] = "GNU"
 import multiprocessing
 import gc
 import argparse
 import torch
 import random
+import time
 from tqdm import tqdm
-import numpy as np
 import torch.nn.functional as F
 from torch.utils.data import DataLoader, Dataset, random_split
 # from sys import path
@@ -76,15 +78,15 @@ def get_args():
     # Testing options
     # For location
     parser.add_argument('--test_representation_location', type=bool, default=True)
-    parser.add_argument('--visualSDF_location', type=bool, default=True)
+    parser.add_argument('--visualSDF_location', type=bool, default=False)
     # For shape
     parser.add_argument('--test_representation_shape', type=bool, default=True)
-    parser.add_argument('--visualSDF_shape', type=bool, default=True)
+    parser.add_argument('--visualSDF_shape', type=bool, default=False)
     return parser.parse_args()
 
 
-def list2vec(Geolist,Geo_dim=128,num_epoch = None,location=True,shape=True,save_file_name=None):
-    args = get_args()
+def list2vec(Geolist,save_model_path=None,Geo_dim=128,num_epoch = None,location_learning=True,shape_learning=True,save_file_name=None,args=None):
+    args = get_args() if args is None else args
     device = torch.device(args.device)
 
     num_workers = args.num_workers
@@ -108,7 +110,7 @@ def list2vec(Geolist,Geo_dim=128,num_epoch = None,location=True,shape=True,save_
 
     polys_dict_shape, polys_dict_loc, classification_labels, areas_labels, perimeters_labels, num_edges_labels = preprocessing_list(Geolist)
     multiprocessing.set_start_method("spawn", force=True)
-    if shape:
+    if location_learning:
         samples = MP_Sampling.MP_sample(polys_dict_loc, num_process, samples_perUnit=samples_perUnit,
                                         point_sample=point_sample,
                                         sample_band_width=sample_band_width,
@@ -141,10 +143,10 @@ def list2vec(Geolist,Geo_dim=128,num_epoch = None,location=True,shape=True,save_
         id_range = torch.arange(0, max_id + 2, dtype=torch.long).to(device)
         best_val_loss = float('inf')
         for epoch in range(epochs):
-            print(torch.std(model.poly_embedding_layer.weight).item())
+            #print(torch.std(model.poly_embedding_layer.weight).item())
             model.train()
             epoch_loss = 0
-            for id, sample, dist in tqdm(dataloader):
+            for id, sample, dist in dataloader:
                 id = id.to(device)
                 sample = sample.to(device)
                 dist = dist.to(device)
@@ -171,15 +173,17 @@ def list2vec(Geolist,Geo_dim=128,num_epoch = None,location=True,shape=True,save_
                 location_embedding = model.poly_embedding_layer.weight.data.cpu().numpy()
                 best_val_loss = test_epoch_loss
                 print(f'Epoch {epoch + 1}/{epochs}, Loss: {epoch_loss / len(dataloader)}, TEST Loss: {test_epoch_loss}')
+                if save_model_path is not None:
+                    torch.save(model.state_dict(), save_model_path.replace('.pth', '_loc.pth'))
 
-    if location:
+    if shape_learning:
         z_size = Geo_dim if Geo_dim is not None else args.z_size_shape
         hidden_size = args.hidden_size_shape
         num_freqs = args.num_freqs_shape
         code_reg_weight = args.code_reg_weight_shape
         weight_decay = args.weight_decay_shape
         num_layers = args.num_layers_shape
-        epochs = args.epochs_shape
+        epochs = num_epoch if num_epoch is not None else args.epochs_location
         polar_fourier = args.polar_fourier_shape
         log_sampling = args.log_sampling_shape
 
@@ -222,10 +226,10 @@ def list2vec(Geolist,Geo_dim=128,num_epoch = None,location=True,shape=True,save_
         id_range = torch.arange(0, max_id + 2, dtype=torch.long).to(device)
         best_val_loss = float('inf')
         for epoch in range(epochs):
-            print(torch.std(model.poly_embedding_layer.weight).item())
+            #print(torch.std(model.poly_embedding_layer.weight).item())
             model.train()
             epoch_loss = 0
-            for id, sample, dist in tqdm(dataloader):
+            for id, sample, dist in dataloader:
                 id = id.to(device)
                 sample = sample.to(device)
                 dist = dist.to(device)
@@ -252,14 +256,20 @@ def list2vec(Geolist,Geo_dim=128,num_epoch = None,location=True,shape=True,save_
                 shape_embedding = model.poly_embedding_layer.weight.data.cpu().numpy()
                 best_val_loss = test_epoch_loss
                 print(f'Epoch {epoch + 1}/{epochs}, Loss: {epoch_loss / len(dataloader)}, TEST Loss: {test_epoch_loss}')
+                if save_model_path is not None:
+                    torch.save(model.state_dict(), save_model_path.replace('.pth', '_shp.pth'))
 
-    if location and shape:
+    if location_learning and shape_learning:
         entity_embedding = np.concatenate((location_embedding, shape_embedding), axis=-1)
-    elif shape:
+    elif shape_learning:
         entity_embedding = shape_embedding
-    elif location:
+    elif location_learning:
         entity_embedding = location_embedding
     else:
         entity_embedding = np.zeros((len(Geolist),Geo_dim))
 
-    np.save(save_file_name, entity_embedding)
+    if save_file_name is not None:
+        np.save(save_file_name, entity_embedding)
+    else:
+        pass
+    return entity_embedding

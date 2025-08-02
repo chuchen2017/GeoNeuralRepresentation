@@ -56,6 +56,7 @@ def normalize_geometries(polys_list):
     if height == 0:
         height = 1e-9
 
+
     normalized_dict = []
     # Step 2: Normalize each geometry
     for geom in polys_list:

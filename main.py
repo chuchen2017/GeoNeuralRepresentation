@@ -1,5 +1,4 @@
 import os
-
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 import multiprocessing
 import gc
@@ -8,6 +7,7 @@ import torch
 import random
 from tqdm import tqdm
 import numpy as np
+import time
 import torch.nn.functional as F
 from torch.utils.data import DataLoader, Dataset, random_split
 # from sys import path
@@ -19,11 +19,12 @@ from utils.data_loader import load_data
 import utils.visualization as visualization
 
 
+
 def get_args():
     parser = argparse.ArgumentParser(description="Geo2vec Training Config")
 
     # file_path: where the data is stored in pkl or gpkg format
-    file_path = r'data\ShapeClassification.gpkg'
+    file_path = r'data\merged_buildings_normalized.gpkg'
     parser.add_argument('--file_path', type=str, default=file_path)
     # Save file path
     save_path = os.path.splitext(file_path)[0] + '.pth'
@@ -178,6 +179,7 @@ def main():
 
             if args.test_representation_location:
                 test_representation.test_distance(polys_dict_loc, location_embedding, num_training=1, num_epochs=30,
+                                                  type1 = 'Polygon', type2 = 'Polygon',
                                                   num_pairs=50000)
             if args.visualSDF_location:
                 visualization.random_visualization(polys_dict_loc, model)
