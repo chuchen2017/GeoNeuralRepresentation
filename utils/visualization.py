@@ -4,30 +4,30 @@ import matplotlib.pyplot as plt
 import numpy as np
 from models.sample_function import signed_distance
 
-def plot_polygon(poly, linewidth=1):
+def plot_polygon(poly, linewidth=1, color='black'):
     if poly.geom_type == 'Polygon':
         x, y = poly.exterior.xy
-        plt.plot(x, y, color='black', linewidth=linewidth)
+        plt.plot(x, y, color=color, linewidth=linewidth)
         for interior in poly.interiors:
             x, y = interior.xy
-            plt.plot(x, y, color='yellow', linewidth=linewidth)
+            plt.plot(x, y, color=color, linewidth=linewidth)
     elif poly.geom_type == 'MultiPolygon':
         for p in poly.geoms:
             x, y = p.exterior.xy
-            plt.plot(x, y, color='black', linewidth=linewidth)
+            plt.plot(x, y, color=color, linewidth=linewidth)
             for interior in p.interiors:
                 x, y = interior.xy
-                plt.plot(x, y, color='yellow', linewidth=linewidth)
+                plt.plot(x, y, color=color, linewidth=linewidth)
     elif poly.geom_type == 'LineString':
         x, y = poly.xy
-        plt.plot(x, y, color='black', linewidth=linewidth)
+        plt.plot(x, y, color=color, linewidth=linewidth)
     elif poly.geom_type == 'MultiLineString':
         for p in poly.geoms:
             x, y = p.exterior.xy
-            plt.plot(x, y, color='black', linewidth=linewidth)
+            plt.plot(x, y, color=color, linewidth=linewidth)
     elif poly.geom_type == 'Point':
         x, y = poly.coords.xy
-        plt.scatter(x, y, color='black', s=linewidth * 10)
+        plt.scatter(x, y, color=color, s=linewidth * 10)
 
 def visualize_signed_distance_real(poly, bounds=((-1, 1), (-1, 1)), resolution=300, levels=100, countour=True):
     x_grid = np.linspace(bounds[0][0], bounds[0][1], resolution)
