@@ -23,7 +23,7 @@ def plot_polygon(poly, linewidth=1, color='black'):
         plt.plot(x, y, color=color, linewidth=linewidth)
     elif poly.geom_type == 'MultiLineString':
         for p in poly.geoms:
-            x, y = p.exterior.xy
+            x, y = p.xy
             plt.plot(x, y, color=color, linewidth=linewidth)
     elif poly.geom_type == 'Point':
         x, y = poly.coords.xy

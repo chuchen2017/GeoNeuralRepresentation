@@ -140,6 +140,31 @@ def poly_preprocess(poly):
         new_line = LineString(normalize_coords(poly.coords, center_x, center_y, scale))
         return (new_line, poly, scale, center_x, center_y)
 
+
+    elif poly.geom_type == 'MultiLineString':
+        all_x = [x for p in poly.geoms for x in p.coords.xy[0]]
+        all_y = [y for p in poly.geoms for y in p.coords.xy[1]]
+
+        min_x, max_x = min(all_x), max(all_x)
+        min_y, max_y = min(all_y), max(all_y)
+
+        center_x = (min_x + max_x) / 2
+        center_y = (min_y + max_y) / 2
+
+        scale_x = max_x - min_x
+        scale_y = max_y - min_y
+        scale = max(scale_x, scale_y)
+        if scale == 0:
+            scale = 1
+
+        new_polys = []
+        for p in poly.geoms:
+            exterior = normalize_coords(p.coords, center_x, center_y, scale)
+            new_polys.append(LineString(exterior))
+
+        new_multi = MultiLineString(new_polys)
+        return (new_multi, poly, scale, center_x, center_y)
+
     elif poly.geom_type == 'Point':
         x, y = poly.x, poly.y
         center_x = x
