@@ -31,13 +31,13 @@ def sample_bounding(poly_input,args):
     samples, distance = sample_bounding_distance(poly, bounding_box, samples_perUnit=extra_sample_perUnit)
     return (poly_id, samples, distance)
 
-def MP_sample(polys_dict,num_process,samples_perUnit=50,point_sample=50,sample_band_width=0.1,uniformed_sample_perUnit=20):
+def MP_sample(polys_dict,num_process,samples_perUnit=50,point_sample=50,sample_band_width=0.1,uniformed_sample_perUnit=20, buffer=0.1):
     minx = min(poly.bounds[0] for poly in polys_dict.values())
     maxx = max(poly.bounds[2] for poly in polys_dict.values())
     miny = min(poly.bounds[1] for poly in polys_dict.values())
     maxy = max(poly.bounds[3] for poly in polys_dict.values())
     bounding_box = (minx, maxx, miny, maxy)
-    bounding_box = (bounding_box[0] - 0.1, bounding_box[1] + 0.1, bounding_box[2] - 0.1, bounding_box[3] + 0.1)
+    bounding_box = (bounding_box[0] - buffer, bounding_box[1] + buffer, bounding_box[2] - buffer, bounding_box[3] + buffer)
     print(f"Bounding box: {bounding_box}")
 
     args = (bounding_box,samples_perUnit,point_sample,sample_band_width,uniformed_sample_perUnit)

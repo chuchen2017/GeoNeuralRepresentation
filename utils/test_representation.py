@@ -207,7 +207,7 @@ def test_representation_embed(model_embedding, z_size, labels, device, poly_ids_
         validation_data = []
         labels_onehot = {}
         labels_set = set([label for id, label in labels.items()])
-        print(labels_set)
+        print('Testing representation with labeled data: ',labels_set)
 
         for i, label in enumerate(labels_set):
             labels_onehot[label] = i
@@ -242,6 +242,7 @@ def test_representation_embed(model_embedding, z_size, labels, device, poly_ids_
         train_data = []
         test_data = []
         validation_data = []
+        print('Testing representation with regression task (Number of Edges Prediction).')
 
         for i in poly_ids_train:
             x = model_embedding[i]
@@ -269,6 +270,7 @@ def test_representation_embed(model_embedding, z_size, labels, device, poly_ids_
         return result_reg
 
 def test_distance(polys_dict,polys_location_embedding,num_training = 5,num_epochs = 30,num_pairs = 50000,type1 = 'Polygon',type2 = 'Polygon',device =torch.device('cuda' if torch.cuda.is_available() else 'cpu')):
+    print('Testing learned location representation with distance regression between {} and {}.'.format(type1,type2))
     polys_location_embedding = torch.tensor(polys_location_embedding)
     distance_dataset = {}
     #type1 2  in 'Polygon' # 'Point' # 'LineString'

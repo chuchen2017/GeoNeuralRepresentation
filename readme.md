@@ -2,6 +2,8 @@
 
 > 🚀 *Building the wheel for next-generation GeoAI* — a moonshot for spatial understanding.
 
+The paper is accepted as a oral presentation at AAAI 2026!
+
 ---
 
 ![Geo2Vec Intuition](./pics/visio144.png)
@@ -39,6 +41,8 @@ Spatial representation learning underpins a wide range of **GeoAI applications**
 ---
 
 ## 🛠️ Installation
+
+Tutorial is updated, you could directly use **tutorial.ipynb** to learn the representation in a more intuitive and instructional way. 
 
 > More setup details will be added soon!
 

@@ -74,7 +74,7 @@ def visualize_signed_distance(model, poly_id,polygon, bounds=((-5, 5), (-5, 5)),
     #plt.title("MLP Prediction of Signed Distance to Polygon with Hole")
     #plt.legend()
     plt.axis('equal')
-    plt.grid(True)
+    #plt.grid(True)
     plt.xlim(bounds[0][0], bounds[0][1])
     plt.ylim(bounds[1][0], bounds[1][1])
 
@@ -101,7 +101,7 @@ def visualize_signed_distance_w_embedding(model,embedding,device=torch.device('c
     plt.title("MLP Prediction of Signed Distance to Polygon with Hole")
     #plt.legend()
     plt.axis('equal')
-    plt.grid(True)
+    #plt.grid(True)
     plt.xlim(bounds[0][0], bounds[0][1])
     plt.ylim(bounds[1][0], bounds[1][1])
     #plt.show()
