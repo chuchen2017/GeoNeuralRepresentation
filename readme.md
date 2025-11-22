@@ -50,10 +50,13 @@ Datasets used in our experiments can be found in the `data` folder.
 Additional large datasets are available on Google Drive: 
   [Dataset Link](https://drive.google.com/file/d/1lsd0pf2qwMxCL6a6tXFd7m_RxnWEs6bn/view?usp=drive_link).
 
-
-## 🛠️ Installation
+## Tutorials
 
 Tutorial is updated, you could directly use `tutorial.ipynb` to learn the representation in a more intuitive and instructional way. 
+
+Alternatively, you can prepare your geospatial entities of any type in a list and use the `list2vec` function in `GeoNeuralRepresentation/runners/list2embedding.py` to generate the shape and location embeddings for your entities.
+
+## 🛠️ Installation
 
 > More setup details will be added soon!
 
