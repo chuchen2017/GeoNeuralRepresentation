@@ -72,22 +72,43 @@ class Geo2Vec_Model(torch.nn.Module):
         y1 = (y - x) / (2 ** 0.5)
         return torch.stack([x1, y1, x, y], dim=-1)
 
+def identity_collate(batch):
+    return batch
+
 class Geo2Vec_Dataset(Dataset):
     def __init__(self, training_samples, dataset_ids):
-        ids, samples, dists = [], [], []
+        # 1. Calculate total size
+        total_len = sum(len(training_samples[i][0]) for i in dataset_ids)
+        
+        # 2. Pre-allocate tensors
+        self.dataset_ids = torch.empty(total_len, dtype=torch.long)
+        # Assuming sample is an array/tensor of shape [features]
+        sample_dim = len(training_samples[next(iter(dataset_ids))][0][0]) 
+        self.dataset_samples = torch.empty((total_len, sample_dim), dtype=torch.float32)
+        self.dataset_distances = torch.empty((total_len, 1), dtype=torch.float32)
 
+        # 3. Fill tensors using pointers
+        ptr = 0
         for id in dataset_ids:
             s, d = training_samples[id]
-            ids.extend([id] * len(s))
-            samples.extend(s)
-            dists.extend(d)
-
-        self.dataset_ids = torch.tensor(ids, dtype=torch.long)
-        self.dataset_samples = torch.tensor(samples, dtype=torch.float32)
-        self.dataset_distances = torch.tensor(dists, dtype=torch.float32).view(-1,
-                                                                               1)  # Ensure distances are shaped correctly
+            length = len(s)
+            
+            self.dataset_ids[ptr : ptr+length] = id
+            self.dataset_samples[ptr : ptr+length] = torch.tensor(s, dtype=torch.float32)
+            self.dataset_distances[ptr : ptr+length] = torch.tensor(d, dtype=torch.float32).view(-1, 1)
+            
+            ptr += length
+    
     def __getitem__(self, index):
         return self.dataset_ids[index], self.dataset_samples[index], self.dataset_distances[index]
+    
+    # Add this to allow the DataLoader to fetch whole batches at once
+    def __getitems__(self, indices):
+        return (
+            self.dataset_ids[indices], 
+            self.dataset_samples[indices], 
+            self.dataset_distances[indices]
+        )
 
     def __len__(self):
         return self.dataset_ids.shape[0]

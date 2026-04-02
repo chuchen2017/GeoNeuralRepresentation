@@ -2,7 +2,7 @@
 
 > 🚀 *Building wheels for next-generation GeoAI* — a moonshot for spatial understanding.
 
-**Geo2Vec is accepted as an oral presentation at AAAI 2026!**
+**We've made a major update, the speed is 10 times faster than before, when learning complex entities or large region.**
 
 ---
 
@@ -61,5 +61,5 @@ Alternatively, you can prepare your geospatial entities of any type in a list an
 > More setup details will be added soon!
 
 ```bash
-git clone GeoNeuralRepresentation
+git clone https://github.com/chuchen2017/GeoNeuralRepresentation.git
 pip install -r requirements.txt

@@ -15,7 +15,7 @@ from torch.utils.data import DataLoader, Dataset, random_split
 # from sys import path
 # path.append('..')
 import utils.test_representation as test_representation
-from models.Geo2Vec import Geo2Vec_Model, Geo2Vec_Dataset, SDFLoss
+from models.Geo2Vec import Geo2Vec_Model, Geo2Vec_Dataset, SDFLoss, identity_collate
 from models import MP_Sampling
 from utils.data_loader import load_data,preprocessing_list
 import utils.visualization as visualization
@@ -108,6 +108,8 @@ def list2vec(Geolist,save_model_path=None,Geo_dim=128,num_epoch = None,location_
     sample_band_width = args.sample_band_width_location
     uniformed_sample_perUnit = args.uniformed_sample_perUnit_location
 
+    torch.set_num_threads(num_process)
+
     polys_dict_shape, polys_dict_loc, classification_labels, areas_labels, perimeters_labels, num_edges_labels = preprocessing_list(Geolist)
     multiprocessing.set_start_method("spawn", force=True)
     if location_learning:
@@ -127,11 +129,13 @@ def list2vec(Geolist,save_model_path=None,Geo_dim=128,num_epoch = None,location_
         total_dataset = None
         gc.collect()
         dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, drop_last=False,
-                                num_workers=num_workers,
-                                pin_memory=True)
+                                num_workers=0,
+                                pin_memory=True,
+                                collate_fn=identity_collate)
         val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, drop_last=False,
-                                    num_workers=num_workers,
-                                    pin_memory=True)
+                                    num_workers=0,
+                                    pin_memory=True,
+                                    collate_fn=identity_collate)
 
         print(f"In average training samples per entity: {len(train_dataset) / len(polys_dict_loc)}")
 
@@ -147,12 +151,13 @@ def list2vec(Geolist,save_model_path=None,Geo_dim=128,num_epoch = None,location_
             model.train()
             epoch_loss = 0
             for id, sample, dist in dataloader:
-                id = id.to(device)
-                sample = sample.to(device)
-                dist = dist.to(device)
+                id = id.to(device, non_blocking=True)
+                sample = sample.to(device, non_blocking=True)
+                dist = dist.to(device, non_blocking=True)
                 optimizer.zero_grad()
                 output = model(id, sample)
-                latend_code = model.poly_embedding_layer(id_range)
+                #latend_code = model.poly_embedding_layer(id_range)
+                latend_code = model.poly_embedding_layer(id)
                 loss = loss_fn(output, dist, latend_code)  # , latend_code
                 loss.backward()
                 optimizer.step()
@@ -162,9 +167,9 @@ def list2vec(Geolist,save_model_path=None,Geo_dim=128,num_epoch = None,location_
             with torch.no_grad():
                 model.eval()
                 for id, sample, dist in val_dataloader:
-                    id = id.to(device)
-                    sample = sample.to(device)
-                    dist = dist.to(device)
+                    id = id.to(device, non_blocking=True)
+                    sample = sample.to(device, non_blocking=True)
+                    dist = dist.to(device, non_blocking=True)
                     output = model(id, sample)
                     loss = F.l1_loss(output, dist, reduction='mean')
                     test_epoch_loss += loss.item()
@@ -210,11 +215,13 @@ def list2vec(Geolist,save_model_path=None,Geo_dim=128,num_epoch = None,location_
         total_dataset = None
         gc.collect()
         dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, drop_last=False,
-                                num_workers=num_workers,
-                                pin_memory=True)
+                                num_workers=0,
+                                pin_memory=True,
+                                collate_fn=identity_collate)
         val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, drop_last=False,
-                                    num_workers=num_workers,
-                                    pin_memory=True)
+                                    num_workers=0,
+                                    pin_memory=True,
+                                    collate_fn=identity_collate)
 
         print(f"In average training samples per entity: {len(train_dataset) / len(polys_dict_shape)}")
 
@@ -230,12 +237,13 @@ def list2vec(Geolist,save_model_path=None,Geo_dim=128,num_epoch = None,location_
             model.train()
             epoch_loss = 0
             for id, sample, dist in dataloader:
-                id = id.to(device)
-                sample = sample.to(device)
-                dist = dist.to(device)
+                id = id.to(device, non_blocking=True)
+                sample = sample.to(device, non_blocking=True)
+                dist = dist.to(device, non_blocking=True)
                 optimizer.zero_grad()
                 output = model(id, sample)
-                latend_code = model.poly_embedding_layer(id_range)
+                #latend_code = model.poly_embedding_layer(id_range)
+                latend_code = model.poly_embedding_layer(id)
                 loss = loss_fn(output, dist, latend_code)  # , latend_code
                 loss.backward()
                 optimizer.step()
@@ -245,9 +253,9 @@ def list2vec(Geolist,save_model_path=None,Geo_dim=128,num_epoch = None,location_
             with torch.no_grad():
                 model.eval()
                 for id, sample, dist in val_dataloader:
-                    id = id.to(device)
-                    sample = sample.to(device)
-                    dist = dist.to(device)
+                    id = id.to(device, non_blocking=True)
+                    sample = sample.to(device, non_blocking=True)
+                    dist = dist.to(device, non_blocking=True)
                     output = model(id, sample)
                     loss = F.l1_loss(output, dist, reduction='mean')
                     test_epoch_loss += loss.item()
