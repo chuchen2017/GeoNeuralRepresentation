@@ -2,7 +2,10 @@
 
 > 🚀 *Building wheels for next-generation GeoAI* — a moonshot for spatial understanding.
 
-**We've made a major update, the speed is 10 times faster than before, when learning complex entities or large region.**
+**We've made a major update, the speed is **10 times** faster than before, when learning complex entities or large region.**
+
+**Learning 100k entities in details need less than 1 hour now.**
+
 
 ---
 
@@ -63,3 +66,11 @@ Alternatively, you can prepare your geospatial entities of any type in a list an
 ```bash
 git clone https://github.com/chuchen2017/GeoNeuralRepresentation.git
 pip install -r requirements.txt
+```
+
+## Tips
+
+1. **DO NOT** normalize the learned embedding, this will lead to loss of features. 
+2. TODO
+
+
