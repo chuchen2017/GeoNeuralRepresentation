@@ -1,17 +1,15 @@
-import geopandas as gpd
+import os
 import pickle
-
-from pyarrow.dataset import dataset
-from tqdm import tqdm
-from utils.preprocess import poly_preprocess,count_edges,normalize_geometries
-from  utils.visualization import plot_polygon
 import random
-import pandas as pd
 
 import geopandas as gpd
 import pandas as pd
 from shapely.geometry import base
-import os
+from tqdm import tqdm
+
+from utils.preprocess import poly_preprocess, count_edges, normalize_geometries
+from utils.visualization import plot_polygon
+
 
 def ensure_geodataframe(polys_scaled_normalized):
     # Case 1: Already a GeoDataFrame
@@ -42,28 +40,42 @@ def ensure_geodataframe(polys_scaled_normalized):
 
     raise TypeError("Cannot convert polys_scaled_normalized to GeoDataFrame. Input format not recognized.")
 
-def preprocessing_list(Geolist):
-    # Converts list ot Geopandas
-    Geolist = normalize_geometries(Geolist)
+
+def _build_polygon_dicts(id_poly_label_triples, visual=False):
+    """Preprocess (id, shapely geometry, label) triples into the dicts shared by
+    `preprocessing_list` and `load_data`. `label` may be None when no classification
+    label is available (e.g. a plain list of geometries).
+    """
     polys_dict_shape = {}
     polys_dict_location = {}
     classification_labels = {}
     areas_labels = {}
     perimeters_labels = {}
     num_edges_labels = {}
-    for id, row in enumerate(Geolist):
-        poly = row
+    for id, poly, label in id_poly_label_triples:
         preprocess = poly_preprocess(poly)
         polys_dict_shape[id] = preprocess[0]
         polys_dict_location[id] = preprocess[1]
+        if label is not None:
+            classification_labels[id] = label
         areas_labels[id] = polys_dict_location[id].area
         perimeters_labels[id] = polys_dict_location[id].length
         num_edges_labels[id] = count_edges(polys_dict_location[id])
-    return polys_dict_shape,polys_dict_location, classification_labels, areas_labels, perimeters_labels, num_edges_labels
+
+        if visual and random.random() < 0.001:
+            plot_polygon(polys_dict_location[id])
+
+    return polys_dict_shape, polys_dict_location, classification_labels, areas_labels, perimeters_labels, num_edges_labels
 
 
-def load_data(dataset_name,visual=False):
-    print('Loading ... ',dataset_name)
+def preprocessing_list(Geolist):
+    # Converts a plain list of shapely geometries into the same dicts `load_data` returns.
+    Geolist = normalize_geometries(Geolist)
+    return _build_polygon_dicts((id, poly, None) for id, poly in enumerate(Geolist))
+
+
+def load_data(dataset_name, visual=False):
+    print('Loading ... ', dataset_name)
     if dataset_name == 'Building':
         polys_scaled_normalized = gpd.read_file('../data/ShapeClassification.gpkg')
     elif dataset_name == 'MNIST':
@@ -104,25 +116,9 @@ def load_data(dataset_name,visual=False):
         polys_scaled_normalized = normalize_geometries(list(polys_scaled_normalized['geometry'].values))
         polys_scaled_normalized = gpd.GeoDataFrame(geometry=polys_scaled_normalized)
 
-    polys_dict_shape = {}
-    polys_dict_location = {}
-    classification_labels = {}
-    areas_labels = {}
-    perimeters_labels = {}
-    num_edges_labels = {}
-    for id, row in tqdm(polys_scaled_normalized.iterrows()):
-        poly = row['geometry']
-        preprocess = poly_preprocess(poly)
-        polys_dict_shape[id] = preprocess[0]#[0]#[1]
-        polys_dict_location[id] = preprocess[1]
-        if 'label' in row:
-            classification_labels[id] = str(row['label'])
-        areas_labels[id] = polys_dict_location[id].area
-        perimeters_labels[id] = polys_dict_location[id].length
-
-        num_edges_labels[id] = count_edges(polys_dict_location[id])
-
-        if visual and random.random() < 0.001:
-            plot_polygon(polys_dict_location[id])
-
-    return polys_dict_shape,polys_dict_location, classification_labels, areas_labels, perimeters_labels, num_edges_labels
+    has_label = 'label' in polys_scaled_normalized.columns
+    triples = (
+        (id, row['geometry'], str(row['label']) if has_label else None)
+        for id, row in tqdm(polys_scaled_normalized.iterrows())
+    )
+    return _build_polygon_dicts(triples, visual=visual)

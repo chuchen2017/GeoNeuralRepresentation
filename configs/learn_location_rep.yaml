@@ -1,0 +1,31 @@
+# Config for runners/learn_location_rep.py (location representation only).
+# Edit any value below and run `python runners/learn_location_rep.py`.
+# Any key can still be overridden on the command line, e.g. `--epochs 10`.
+
+file_path: 'data\ShapeClassification.gpkg'
+save_file_name: 'data\ShapeClassification.pth'
+
+# Sampling parameters
+num_process: 12
+samples_perUnit: 4000
+point_sample: 10
+sample_band_width: 0.1
+uniformed_sample_perUnit: 30
+
+# Training parameters
+batch_size: 20480
+# device: 'cuda'  # uncomment to force cpu/cuda, otherwise auto-detected
+epochs: 5
+num_layers: 8
+z_size: 256
+hidden_size: 256
+num_freqs: 16
+code_reg_weight: 0.0
+weight_decay: 0.01
+polar_fourier: false
+log_sampling: false
+training_ratio: 0.95
+
+# Testing options
+test_representation: false
+visualSDF: true

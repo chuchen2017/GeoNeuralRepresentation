@@ -57,7 +57,22 @@ Additional large datasets are available on Google Drive:
 
 Tutorial is updated, you could directly use `tutorial.ipynb` to learn the representation in a more intuitive and instructional way. 
 
-Alternatively, you can prepare your geospatial entities of any type in a list and use the `list2vec` function in `GeoNeuralRepresentation/runners/list2embedding.py` to generate the shape and location embeddings for your entities.
+**Option 1 - use Geo2Vec in your own code.** If you want to incorporate Geo2Vec directly into your own pipeline, import the `list2vec` function from `runners/list2embedding.py` and pass it a plain Python list of your geospatial entities (any mix of points, lines, or polygons). It returns a NumPy array with one embedding row per entity:
+
+```python
+from runners.list2embedding import list2vec
+
+geo_list = [poly1, poly2, poly3]   # your list of shapely geometries
+embedding = list2vec(geo_list, Geo_dim=128)
+```
+
+**Option 2 - run `main.py` with a config file.** If you'd rather not write any code, point a config under `configs/` (e.g. `configs/main.yaml`) at your `.gpkg`/`.pkl` file and run:
+
+```bash
+python main.py --config configs/main.yaml
+```
+
+`main.py` samples, trains, and saves the learned location, shape, and combined embeddings as `.npy` files next to `save_file_name` in your config.
 
 ## 🛠️ Installation
 
@@ -71,6 +86,6 @@ pip install -r requirements.txt
 ## Tips
 
 1. **DO NOT** normalize the learned embedding, this will lead to loss of features. 
-2. TODO
+2. You can still add **new entities** after you already have a Geo2Vec model. Using the `save_model_path` of the list2vec function, this will keep the newly added entity embeddings in the same latent space of the previous ones. 
 
 

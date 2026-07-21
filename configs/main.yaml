@@ -1,0 +1,53 @@
+# Config for main.py (learns both location and shape representations).
+# Edit any value below and run `python main.py` - no CLI flags required.
+# Any key can still be overridden on the command line, e.g. `--epochs_location 10`.
+
+file_path: 'data\ShapeClassification.gpkg'
+save_file_name: 'data\ShapeClassification.pth'
+
+# Sampling parameters - location
+num_process: 10
+samples_perUnit_location: 4000
+point_sample_location: 10
+sample_band_width_location: 0.1
+uniformed_sample_perUnit_location: 30
+
+# Sampling parameters - shape
+samples_perUnit_shape: 100
+point_sample_shape: 20
+sample_band_width_shape: 0.1
+uniformed_sample_perUnit_shape: 20
+
+# Training parameters
+batch_size: 20480
+# device: 'cuda'  # uncomment to force cpu/cuda, otherwise auto-detected
+
+# Training parameters - location
+epochs_location: 2
+num_layers_location: 8
+z_size_location: 256
+hidden_size_location: 256
+num_freqs_location: 16
+code_reg_weight_location: 0.0
+weight_decay_location: 0.01
+polar_fourier_location: false
+log_sampling_location: false
+training_ratio_location: 0.95
+
+# Training parameters - shape
+epochs_shape: 2
+num_layers_shape: 8
+z_size_shape: 256
+hidden_size_shape: 256
+num_freqs_shape: 8
+code_reg_weight_shape: 1.0
+weight_decay_shape: 0.01
+polar_fourier_shape: false
+log_sampling_shape: true
+training_ratio_shape: 0.95
+
+# Testing options
+test_representation_location: true
+visualSDF_location: true
+test_representation_shape: true
+visualSDF_shape: true

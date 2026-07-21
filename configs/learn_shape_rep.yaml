@@ -1,0 +1,31 @@
+# Config for runners/learn_shape_rep.py (shape representation only).
+# Edit any value below and run `python runners/learn_shape_rep.py`.
+# Any key can still be overridden on the command line, e.g. `--epochs 10`.
+
+file_path: 'data\ShapeClassification.gpkg'
+save_file_name: 'data\ShapeClassification.pth'
+
+# Sampling parameters
+num_process: 16
+samples_perUnit: 100
+point_sample: 5
+sample_band_width: 0.1
+uniformed_sample_perUnit: 10
+
+# Training parameters
+batch_size: 20480
+# device: 'cuda'  # uncomment to force cpu/cuda, otherwise auto-detected
+epochs: 5
+num_layers: 8
+z_size: 256
+hidden_size: 256
+num_freqs: 8
+code_reg_weight: 1.0
+weight_decay: 0.01
+polar_fourier: true
+log_sampling: true
+training_ratio: 0.95
+
+# Testing options
+test_representation: true
+visualSDF: true

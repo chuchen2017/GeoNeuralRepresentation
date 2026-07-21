@@ -3,22 +3,15 @@ import os
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 import os
 os.environ["MKL_THREADING_LAYER"] = "GNU"
-import multiprocessing
-import gc
 import argparse
 import torch
-import random
-import time
-from tqdm import tqdm
-import torch.nn.functional as F
-from torch.utils.data import DataLoader, Dataset, random_split
 # from sys import path
 # path.append('..')
-import utils.test_representation as test_representation
-from models.Geo2Vec import Geo2Vec_Model, Geo2Vec_Dataset, SDFLoss, identity_collate
-from models import MP_Sampling
-from utils.data_loader import load_data,preprocessing_list
-import utils.visualization as visualization
+from utils.config import load_config
+from utils.data_loader import preprocessing_list
+from utils.train_utils import sample_geo2vec_dataset, train_geo2vec_model
+
+DEFAULT_CONFIG = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'configs', 'list2embedding.yaml')
 
 
 def get_args():
@@ -82,190 +75,66 @@ def get_args():
     # For shape
     parser.add_argument('--test_representation_shape', type=bool, default=True)
     parser.add_argument('--visualSDF_shape', type=bool, default=False)
-    return parser.parse_args()
+    return load_config(parser, default_config=DEFAULT_CONFIG)
 
 
 def list2vec(Geolist,save_model_path=None,Geo_dim=128,num_epoch = None,location_learning=True,shape_learning=True,save_file_name=None,args=None):
     args = get_args() if args is None else args
     device = torch.device(args.device)
 
-    num_workers = args.num_workers
-    z_size = Geo_dim if Geo_dim is not None else args.z_size_location
-    hidden_size = args.hidden_size_location
-    num_freqs = args.num_freqs_location
-    code_reg_weight = args.code_reg_weight_location
-    weight_decay = args.weight_decay_location
-    num_layers = args.num_layers_location
-    epochs = num_epoch if num_epoch is not None else args.epochs_location
-    polar_fourier = args.polar_fourier_location
-    log_sampling = args.log_sampling_location
-
-    batch_size = args.batch_size
-    num_process = args.num_process
-    training_ratio = args.training_ratio_location
-    samples_perUnit = args.samples_perUnit_location
-    point_sample = args.point_sample_location
-    sample_band_width = args.sample_band_width_location
-    uniformed_sample_perUnit = args.uniformed_sample_perUnit_location
-
-    torch.set_num_threads(num_process)
+    torch.set_num_threads(args.num_process)
 
     polys_dict_shape, polys_dict_loc, classification_labels, areas_labels, perimeters_labels, num_edges_labels = preprocessing_list(Geolist)
-    multiprocessing.set_start_method("spawn", force=True)
+
     if location_learning:
-        samples = MP_Sampling.MP_sample(polys_dict_loc, num_process, samples_perUnit=samples_perUnit,
-                                        point_sample=point_sample,
-                                        sample_band_width=sample_band_width,
-                                        uniformed_sample_perUnit=uniformed_sample_perUnit)
-
-        max_id = max(polys_dict_loc.keys())
-        total_dataset = Geo2Vec_Dataset(samples, polys_dict_loc.keys())
-        samples = None
-        gc.collect()
-
-        train_size = round(training_ratio * len(total_dataset))
-        val_size = len(total_dataset) - train_size
-        train_dataset, val_dataset = random_split(total_dataset, [train_size, val_size])
-        total_dataset = None
-        gc.collect()
-        dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, drop_last=False,
-                                num_workers=0,
-                                pin_memory=True,
-                                collate_fn=identity_collate)
-        val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, drop_last=False,
-                                    num_workers=0,
-                                    pin_memory=True,
-                                    collate_fn=identity_collate)
-
-        print(f"In average training samples per entity: {len(train_dataset) / len(polys_dict_loc)}")
-
-        model = Geo2Vec_Model(n_poly=max_id + 2, z_size=z_size, hidden_size=hidden_size, num_freqs=num_freqs,
-                              weight_decay=weight_decay, log_sampling=log_sampling,
-                              polar_fourier=polar_fourier, num_layers=num_layers).to(device)
-        optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-        loss_fn = SDFLoss(code_reg_weight=code_reg_weight, sum=True)
-        id_range = torch.arange(0, max_id + 2, dtype=torch.long).to(device)
-        best_val_loss = float('inf')
-        for epoch in range(epochs):
-            #print(torch.std(model.poly_embedding_layer.weight).item())
-            model.train()
-            epoch_loss = 0
-            for id, sample, dist in dataloader:
-                id = id.to(device, non_blocking=True)
-                sample = sample.to(device, non_blocking=True)
-                dist = dist.to(device, non_blocking=True)
-                optimizer.zero_grad()
-                output = model(id, sample)
-                #latend_code = model.poly_embedding_layer(id_range)
-                latend_code = model.poly_embedding_layer(id)
-                loss = loss_fn(output, dist, latend_code)  # , latend_code
-                loss.backward()
-                optimizer.step()
-                epoch_loss += loss.item()
-
-            test_epoch_loss = 0
-            with torch.no_grad():
-                model.eval()
-                for id, sample, dist in val_dataloader:
-                    id = id.to(device, non_blocking=True)
-                    sample = sample.to(device, non_blocking=True)
-                    dist = dist.to(device, non_blocking=True)
-                    output = model(id, sample)
-                    loss = F.l1_loss(output, dist, reduction='mean')
-                    test_epoch_loss += loss.item()
-
-            if best_val_loss > test_epoch_loss:
-                location_embedding = model.poly_embedding_layer.weight.data.cpu().numpy()
-                best_val_loss = test_epoch_loss
-                print(f'Epoch {epoch + 1}/{epochs}, Loss: {epoch_loss / len(dataloader)}, TEST Loss: {test_epoch_loss}')
-                if save_model_path is not None:
-                    torch.save(model.state_dict(), save_model_path.replace('.pth', '_loc.pth'))
+        train_dataset, val_dataset, max_id = sample_geo2vec_dataset(
+            polys_dict_loc,
+            num_process=args.num_process,
+            samples_perUnit=args.samples_perUnit_location,
+            point_sample=args.point_sample_location,
+            sample_band_width=args.sample_band_width_location,
+            uniformed_sample_perUnit=args.uniformed_sample_perUnit_location,
+            training_ratio=args.training_ratio_location,
+        )
+        _, location_embedding, _ = train_geo2vec_model(
+            train_dataset, val_dataset, max_id, device,
+            epochs=num_epoch if num_epoch is not None else args.epochs_location,
+            batch_size=args.batch_size,
+            z_size=Geo_dim if Geo_dim is not None else args.z_size_location,
+            hidden_size=args.hidden_size_location,
+            num_freqs=args.num_freqs_location,
+            num_layers=args.num_layers_location,
+            code_reg_weight=args.code_reg_weight_location,
+            weight_decay=args.weight_decay_location,
+            polar_fourier=args.polar_fourier_location,
+            log_sampling=args.log_sampling_location,
+            save_model_path=save_model_path.replace('.pth', '_loc.pth') if save_model_path is not None else None,
+        )
 
     if shape_learning:
-        z_size = Geo_dim if Geo_dim is not None else args.z_size_shape
-        hidden_size = args.hidden_size_shape
-        num_freqs = args.num_freqs_shape
-        code_reg_weight = args.code_reg_weight_shape
-        weight_decay = args.weight_decay_shape
-        num_layers = args.num_layers_shape
-        epochs = num_epoch if num_epoch is not None else args.epochs_location
-        polar_fourier = args.polar_fourier_shape
-        log_sampling = args.log_sampling_shape
-
-        training_ratio = args.training_ratio_shape
-        samples_perUnit = args.samples_perUnit_shape
-        point_sample = args.point_sample_shape
-        sample_band_width = args.sample_band_width_shape
-        uniformed_sample_perUnit = args.uniformed_sample_perUnit_shape
-
-        multiprocessing.set_start_method("spawn", force=True)
-        samples = MP_Sampling.MP_sample(polys_dict_shape, num_process, samples_perUnit=samples_perUnit,
-                                        point_sample=point_sample,
-                                        sample_band_width=sample_band_width,
-                                        uniformed_sample_perUnit=uniformed_sample_perUnit)
-
-        max_id = max(polys_dict_shape.keys())
-        total_dataset = Geo2Vec_Dataset(samples, polys_dict_shape.keys())
-        samples = None
-        gc.collect()
-
-        train_size = round(training_ratio * len(total_dataset))
-        val_size = len(total_dataset) - train_size
-        train_dataset, val_dataset = random_split(total_dataset, [train_size, val_size])
-        total_dataset = None
-        gc.collect()
-        dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, drop_last=False,
-                                num_workers=0,
-                                pin_memory=True,
-                                collate_fn=identity_collate)
-        val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, drop_last=False,
-                                    num_workers=0,
-                                    pin_memory=True,
-                                    collate_fn=identity_collate)
-
-        print(f"In average training samples per entity: {len(train_dataset) / len(polys_dict_shape)}")
-
-        model = Geo2Vec_Model(n_poly=max_id + 2, z_size=z_size, hidden_size=hidden_size, num_freqs=num_freqs,
-                              weight_decay=weight_decay, log_sampling=log_sampling,
-                              polar_fourier=polar_fourier, num_layers=num_layers).to(device)
-        optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-        loss_fn = SDFLoss(code_reg_weight=code_reg_weight, sum=True)
-        id_range = torch.arange(0, max_id + 2, dtype=torch.long).to(device)
-        best_val_loss = float('inf')
-        for epoch in range(epochs):
-            #print(torch.std(model.poly_embedding_layer.weight).item())
-            model.train()
-            epoch_loss = 0
-            for id, sample, dist in dataloader:
-                id = id.to(device, non_blocking=True)
-                sample = sample.to(device, non_blocking=True)
-                dist = dist.to(device, non_blocking=True)
-                optimizer.zero_grad()
-                output = model(id, sample)
-                #latend_code = model.poly_embedding_layer(id_range)
-                latend_code = model.poly_embedding_layer(id)
-                loss = loss_fn(output, dist, latend_code)  # , latend_code
-                loss.backward()
-                optimizer.step()
-                epoch_loss += loss.item()
-
-            test_epoch_loss = 0
-            with torch.no_grad():
-                model.eval()
-                for id, sample, dist in val_dataloader:
-                    id = id.to(device, non_blocking=True)
-                    sample = sample.to(device, non_blocking=True)
-                    dist = dist.to(device, non_blocking=True)
-                    output = model(id, sample)
-                    loss = F.l1_loss(output, dist, reduction='mean')
-                    test_epoch_loss += loss.item()
-
-            if best_val_loss > test_epoch_loss:
-                shape_embedding = model.poly_embedding_layer.weight.data.cpu().numpy()
-                best_val_loss = test_epoch_loss
-                print(f'Epoch {epoch + 1}/{epochs}, Loss: {epoch_loss / len(dataloader)}, TEST Loss: {test_epoch_loss}')
-                if save_model_path is not None:
-                    torch.save(model.state_dict(), save_model_path.replace('.pth', '_shp.pth'))
+        train_dataset, val_dataset, max_id = sample_geo2vec_dataset(
+            polys_dict_shape,
+            num_process=args.num_process,
+            samples_perUnit=args.samples_perUnit_shape,
+            point_sample=args.point_sample_shape,
+            sample_band_width=args.sample_band_width_shape,
+            uniformed_sample_perUnit=args.uniformed_sample_perUnit_shape,
+            training_ratio=args.training_ratio_shape,
+        )
+        _, shape_embedding, _ = train_geo2vec_model(
+            train_dataset, val_dataset, max_id, device,
+            epochs=num_epoch if num_epoch is not None else args.epochs_shape,
+            batch_size=args.batch_size,
+            z_size=Geo_dim if Geo_dim is not None else args.z_size_shape,
+            hidden_size=args.hidden_size_shape,
+            num_freqs=args.num_freqs_shape,
+            num_layers=args.num_layers_shape,
+            code_reg_weight=args.code_reg_weight_shape,
+            weight_decay=args.weight_decay_shape,
+            polar_fourier=args.polar_fourier_shape,
+            log_sampling=args.log_sampling_shape,
+            save_model_path=save_model_path.replace('.pth', '_shp.pth') if save_model_path is not None else None,
+        )
 
     if location_learning and shape_learning:
         entity_embedding = np.concatenate((location_embedding, shape_embedding), axis=-1)
