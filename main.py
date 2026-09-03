@@ -108,7 +108,7 @@ def main():
         weight_decay=args.weight_decay_location,
         polar_fourier=args.polar_fourier_location,
         log_sampling=args.log_sampling_location,
-        save_model_path=save_file_name,
+        save_model_path=save_file_name.replace('.pth', '_loc.pth'),
     )
     np.save(save_file_name.replace('.pth', '_loc'), location_embedding)
 
@@ -140,7 +140,7 @@ def main():
         weight_decay=args.weight_decay_shape,
         polar_fourier=args.polar_fourier_shape,
         log_sampling=args.log_sampling_shape,
-        save_model_path=save_file_name,
+        save_model_path=save_file_name.replace('.pth', '_shp.pth'),
     )
     np.save(save_file_name.replace('.pth', '_shp'), shape_embedding)
 
