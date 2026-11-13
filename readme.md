@@ -89,3 +89,23 @@ pip install -r requirements.txt
 2. You can still add **new entities** after you already have a Geo2Vec model. Using the `save_model_path` of the list2vec function, this will keep the newly added entity embeddings in the same latent space of the previous ones. 
 
 
+## Citation
+
+If you find our repository useful, please consider giving it a ⭐ **star** and citing our paper:
+
+```bibtex
+@article{Chu_Shahabi_2026,
+  title   = {Geo2Vec: Shape- and Distance-Aware Neural Representation of Geospatial Entities},
+  author  = {Chu, Chen and Shahabi, Cyrus},
+  journal = {Proceedings of the AAAI Conference on Artificial Intelligence},
+  volume  = {40},
+  number  = {23},
+  pages   = {18985--18993},
+  year    = {2026},
+  month   = {Mar},
+  doi     = {10.1609/aaai.v40i23.38970},
+  url     = {https://ojs.aaai.org/index.php/AAAI/article/view/38970}
+}
+```
+
+Thank you for your support! 😊
